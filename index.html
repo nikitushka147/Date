@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Підемо на побачення? 💖</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        h1, h2 {
+            color: #d63384;
+            margin-bottom: 15px;
+        }
+
+        p {
+            color: #555;
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+        }
+
+        .btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            position: relative;
+            min-height: 60px;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .btn-yes {
+            background-color: #ff4757;
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
+        }
+
+        .btn-yes:hover {
+            background-color: #e84118;
+            transform: scale(1.05);
+        }
+
+        .btn-no {
+            background-color: #747d8c;
+            color: white;
+            position: absolute;
+            transition: all 0.15s ease-out;
+        }
+
+        /* Стилі для форми з вибором */
+        .step {
+            display: none;
+        }
+
+        .step.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ffccd5;
+            border-radius: 10px;
+            outline: none;
+            font-size: 1rem;
+        }
+
+        input:focus, select:focus {
+            border-color: #ff4757;
+        }
+
+        .summary-item {
+            background: #fff0f3;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            text-align: left;
+            border-left: 4px solid #ff4757;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <!-- КРОК 1: Головне питання -->
+        <div id="step-1" class="step active">
+            <h1>Привіт! 💖</h1>
+            <p>У мене є до тебе одне дуже важливе запитання...</p>
+            <h2>Підеш зі мною на побачення?</h2>
+            <div class="btn-group" id="btn-container">
+                <button class="btn-yes" onclick="nextStep(2)">ТАК! 🥳</button>
+                <button class="btn-no" id="no-btn">Ні 😜</button>
+            </div>
+        </div>
+
+        <!-- КРОК 2: Деталі побачення -->
+        <div id="step-2" class="step">
+            <h2>Чудово! 🎉</h2>
+            <p>Тепер давай сплануємо наш ідеальний день:</p>
+
+            <div class="form-group">
+                <label for="date">📅 Дата:</label>
+                <input type="date" id="date">
+            </div>
+
+            <div class="form-group">
+                <label for="time">⏰ Час:</label>
+                <input type="time" id="time">
+            </div>
+
+            <div class="form-group">
+                <label for="format">✨ Формат побачення:</label>
+                <select id="format">
+                    <option value="Затишна прогулянка">Затишна прогулянка</option>
+                    <option value="Романтичний вечір">Романтичний вечір</option>
+                    <option value="Активний відпочинок / Пригоди">Активний відпочинок / Пригоди</option>
+                    <option value="Кіно або театр">Кіно або театр</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="place">📍 Куди підемо?</label>
+                <input type="text" id="place" placeholder="Наприклад: Парк, Затишна кав'ярня...">
+            </div>
+
+            <div class="form-group">
+                <label for="food">🍕 Що будемо їсти?</label>
+                <input type="text" id="food" placeholder="Наприклад: Піца, Суші, Морозиво...">
+            </div>
+
+            <button class="btn-yes" style="width: 100%;" onclick="finishPlanner()">Зафіксувати план ✨</button>
+        </div>
+
+        <!-- КРОК 3: Фінал -->
+        <div id="step-3" class="step">
+            <h2>До зустрічі! 🥰</h2>
+            <p>Я вже з нетерпінням чекаю на цей день!</p>
+            
+            <div id="summary"></div>
+
+            <p style="font-size: 0.9rem; color: #888; margin-top: 15px;">
+                Зроби скриншот і надішли мені в чат! 📸
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // --- ЛОГІКА ДЛЯ КНОПКИ "НІ", ЯКА ТІКАЄ ---
+        const noBtn = document.getElementById('no-btn');
+        const container = document.getElementById('btn-container');
+
+        // Початкова позиція для кнопки "Ні"
+        noBtn.style.right = '20px';
+
+        function moveButton() {
+            // Отримуємо розміри контейнера
+            const containerRect = container.getBoundingClientRect();
+            const btnRect = noBtn.getBoundingClientRect();
+
+            // Рахуємо максимальні координати для переміщення всередині контейнера/картки
+            const maxX = 150; // радіус втечі по X
+            const maxY = 100; // радіус втечі по Y
+
+            const randomX = (Math.random() - 0.5) * maxX * 2;
+            const randomY = (Math.random() - 0.5) * maxY * 2;
+
+            noBtn.style.transform = `translate(${randomX}px, ${randomY}px)`;
+        }
+
+        // Втікає при наведенні миші
+        noBtn.addEventListener('mouseover', moveButton);
+        // Втікає при спробі тапу на мобільному
+        noBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // Запобігає кліку
+            moveButton();
+        });
+
+
+        // --- ЛОГІКА ПЕРЕХОДУ МІЖ КРОКАМИ ---
+        function nextStep(stepNumber) {
+            document.querySelectorAll('.step').forEach(step => {
+                step.classList.remove('active');
+            });
+            document.getElementById(`step-${stepNumber}`).classList.add('active');
+        }
+
+        function finishPlanner() {
+            const date = document.getElementById('date').value || 'Не вказано';
+            const time = document.getElementById('time').value || 'Не вказано';
+            const format = document.getElementById('format').value;
+            const place = document.getElementById('place').value || 'На твій вибір 😉';
+            const food = document.getElementById('food').value || 'Смачненьке 😋';
+
+            const summaryHTML = `
+                <div class="summary-item"><strong>📅 Дата:</strong> ${date}</div>
+                <div class="summary-item"><strong>⏰ Час:</strong> ${time}</div>
+                <div class="summary-item"><strong>✨ Формат:</strong> ${format}</div>
+                <div class="summary-item"><strong>📍 Місце:</strong> ${place}</div>
+                <div class="summary-item"><strong>🍕 Меню:</strong> ${food}</div>
+            `;
+
+            document.getElementById('summary').innerHTML = summaryHTML;
+            nextStep(3);
+        }
+    </script>
+</body>
+</html>
