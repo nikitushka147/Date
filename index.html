@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Підемо на побачення? 💖</title>
+
+    <!-- Бібліотека EmailJS -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
     <style>
         * {
             box-sizing: border-box;
@@ -15,10 +19,13 @@
         body {
             background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
             min-height: 100vh;
+            width: 100vw;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
+            overflow: hidden; /* Запобігає появі скролбарів, коли кнопка тікає */
+            position: relative;
         }
 
         .card {
@@ -29,8 +36,7 @@
             max-width: 450px;
             width: 100%;
             text-align: center;
-            position: relative;
-            overflow: hidden;
+            z-index: 2; /* Щоб картка була над фоном */
         }
 
         h1, h2 {
@@ -47,15 +53,13 @@
         .btn-group {
             display: flex;
             justify-content: center;
-            gap: 15px;
+            gap: 20px;
             margin-top: 20px;
-            position: relative;
-            min-height: 60px;
         }
 
         button {
-            padding: 12px 25px;
-            font-size: 1rem;
+            padding: 12px 28px;
+            font-size: 1.1rem;
             font-weight: bold;
             border: none;
             border-radius: 25px;
@@ -67,21 +71,23 @@
             background-color: #ff4757;
             color: white;
             box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
+            z-index: 3;
         }
 
         .btn-yes:hover {
             background-color: #e84118;
-            transform: scale(1.05);
+            transform: scale(1.08);
         }
 
+        /* Кнопка "Ні" тепер має абсолютне позиціонування відносно всього екрана */
         .btn-no {
             background-color: #747d8c;
             color: white;
-            position: absolute;
-            transition: all 0.15s ease-out;
+            position: fixed; /* Позиціонування відносно всього вікна браузера */
+            transition: left 0.2s ease-out, top 0.2s ease-out; /* Плавний рух по всьому екрану */
+            z-index: 10;
         }
 
-        /* Стилі для форми з вибором */
         .step {
             display: none;
         }
@@ -129,23 +135,29 @@
             text-align: left;
             border-left: 4px solid #ff4757;
         }
+
+        .status-msg {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #2ed573;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <!-- КРОК 1: Головне питання -->
+        <!-- КРОК 1 -->
         <div id="step-1" class="step active">
             <h1>Привіт! 💖</h1>
             <p>У мене є до тебе одне дуже важливе запитання...</p>
             <h2>Підеш зі мною на побачення?</h2>
-            <div class="btn-group" id="btn-container">
+            <div class="btn-group">
                 <button class="btn-yes" onclick="nextStep(2)">ТАК! 🥳</button>
-                <button class="btn-no" id="no-btn">Ні 😜</button>
             </div>
         </div>
 
-        <!-- КРОК 2: Деталі побачення -->
+        <!-- КРОК 2 -->
         <div id="step-2" class="step">
             <h2>Чудово! 🎉</h2>
             <p>Тепер давай сплануємо наш ідеальний день:</p>
@@ -183,59 +195,75 @@
             <button class="btn-yes" style="width: 100%;" onclick="finishPlanner()">Зафіксувати план ✨</button>
         </div>
 
-        <!-- КРОК 3: Фінал -->
+        <!-- КРОК 3 -->
         <div id="step-3" class="step">
             <h2>До зустрічі! 🥰</h2>
             <p>Я вже з нетерпінням чекаю на цей день!</p>
-            
             <div id="summary"></div>
-
-            <p style="font-size: 0.9rem; color: #888; margin-top: 15px;">
-                Зроби скриншот і надішли мені в чат! 📸
-            </p>
+            <div id="email-status" class="status-msg"></div>
         </div>
     </div>
 
+    <!-- Кнопка "Ні" винесена з картки, щоб вільно літати по всій сторінці -->
+    <button class="btn-no" id="no-btn">Ні 😜</button>
+
     <script>
-        // --- ЛОГІКА ДЛЯ КНОПКИ "НІ", ЯКА ТІКАЄ ---
         const noBtn = document.getElementById('no-btn');
-        const container = document.getElementById('btn-container');
 
-        // Початкова позиція для кнопки "Ні"
-        noBtn.style.right = '20px';
+        // Встановлюємо початкове положення кнопки біля картки після завантаження сторінки
+        window.addEventListener('load', () => {
+            const yesBtn = document.querySelector('.btn-yes');
+            const rect = yesBtn.getBoundingClientRect();
+            noBtn.style.left = `${rect.right + 20}px`;
+            noBtn.style.top = `${rect.top}px`;
+        });
 
+        // Функція втечі по ВСЬОМУ екрану
         function moveButton() {
-            // Отримуємо розміри контейнера
-            const containerRect = container.getBoundingClientRect();
-            const btnRect = noBtn.getBoundingClientRect();
+            // Отримуємо ширину та висоту всього вікна браузера
+            const screenWidth = window.innerWidth;
+            const screenHeight = window.innerHeight;
 
-            // Рахуємо максимальні координати для переміщення всередині контейнера/картки
-            const maxX = 150; // радіус втечі по X
-            const maxY = 100; // радіус втечі по Y
+            // Отримуємо розміри самої кнопки
+            const btnWidth = noBtn.offsetWidth;
+            const btnHeight = noBtn.offsetHeight;
 
-            const randomX = (Math.random() - 0.5) * maxX * 2;
-            const randomY = (Math.random() - 0.5) * maxY * 2;
+            // Відступаємо від країв екрана (padding) на 20px, щоб кнопка не вилітала за рамки
+            const padding = 20;
 
-            noBtn.style.transform = `translate(${randomX}px, ${randomY}px)`;
+            const maxLeft = screenWidth - btnWidth - padding;
+            const maxTop = screenHeight - btnHeight - padding;
+
+            // Генеруємо випадкові координати в межах всього екрана
+            const randomLeft = Math.max(padding, Math.floor(Math.random() * maxLeft));
+            const randomTop = Math.max(padding, Math.floor(Math.random() * maxTop));
+
+            // Задаємо нові позиції
+            noBtn.style.left = `${randomLeft}px`;
+            noBtn.style.top = `${randomTop}px`;
         }
 
-        // Втікає при наведенні миші
+        // Події втечі
         noBtn.addEventListener('mouseover', moveButton);
-        // Втікає при спробі тапу на мобільному
         noBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // Запобігає кліку
+            e.preventDefault(); // Щоб не було кліка на сенсорних екранах
             moveButton();
         });
 
-
-        // --- ЛОГІКА ПЕРЕХОДУ МІЖ КРОКАМИ ---
+        // Перехід між кроками
         function nextStep(stepNumber) {
+            // Ховаємо кнопку "Ні", коли людина натиснула "ТАК"
+            if(stepNumber > 1) {
+                noBtn.style.display = 'none';
+            }
+
             document.querySelectorAll('.step').forEach(step => {
                 step.classList.remove('active');
             });
             document.getElementById(`step-${stepNumber}`).classList.add('active');
         }
 
+        // Фінал та відправка Email
         function finishPlanner() {
             const date = document.getElementById('date').value || 'Не вказано';
             const time = document.getElementById('time').value || 'Не вказано';
@@ -250,9 +278,30 @@
                 <div class="summary-item"><strong>📍 Місце:</strong> ${place}</div>
                 <div class="summary-item"><strong>🍕 Меню:</strong> ${food}</div>
             `;
-
             document.getElementById('summary').innerHTML = summaryHTML;
             nextStep(3);
+
+            // EMAILJS Налаштування (заміни на свої ключі)
+            const PUBLIC_KEY = "ТВІЙ_PUBLIC_KEY"; 
+            const SERVICE_ID = "ТВІЙ_SERVICE_ID"; 
+            const TEMPLATE_ID = "ТВІЙ_TEMPLATE_ID"; 
+
+            emailjs.init(PUBLIC_KEY);
+
+            const templateParams = {
+                date: date,
+                time: time,
+                format: format,
+                place: place,
+                food: food
+            };
+
+            emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams)
+                .then(function(response) {
+                    document.getElementById('email-status').innerText = "📩 Деталі успішно надіслані!";
+                }, function(error) {
+                    console.log('Помилка відправки:', error);
+                });
         }
     </script>
 </body>
